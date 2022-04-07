@@ -12,9 +12,6 @@ def global_background(num):
 
 # fontStyle_coordinate=tk.font.Font(family="Arial", size=12)
 
-def template():
-    pass
-
 def set_window(window : tk.Tk, text : str):
     window.geometry('1200x650')
     window.title(text)
@@ -56,5 +53,27 @@ def Label(window, name="label", text=""):
                       text=text,
                       font=fontStyle(),
                       background=global_background(1))
+
+    return L_temp
+
+def LabelT(window, text=""):
+    L_temp = tk.Label(window,
+                      text=text,
+                      font=fontStyle(),
+                      background=global_background(1),
+                      justify=tk.LEFT)
+
+    return L_temp
+
+
+def LabelLink(window, text="", callback=None):
+    L_temp = tk.Label(window,
+                      text=text,
+                      font=fontStyle(),
+                      background=global_background(1),
+                      fg="blue",
+                      cursor="hand2")
+
+    L_temp.bind("<Button-1>", callback)
 
     return L_temp

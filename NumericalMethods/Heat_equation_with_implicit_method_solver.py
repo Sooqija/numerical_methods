@@ -1,9 +1,7 @@
-# Interfacee
+# Interface
 import tkinter as tk
 import my_style as ms
-
-# Arrays ? is need
-import numpy as np
+import webbrowser
 
 # Charts
 import matplotlib
@@ -20,20 +18,57 @@ window = tk.Tk()
 data = {"l": 1.0, "n": 6, "_T_": 1.0, "m": 40, "a": 1.0, "cur_t": 0.0, "h": None, "tau": None}
 T_1 = []
 
+
 def clear():
     global window
     for part in window.winfo_children():
         part.destroy()
 
+
+def report(event):
+    webbrowser.open_new(r"https://1drv.ms/w/s!AuklzTu4sjCrgUwweyhyq7KQ635f?e=nLffVW")
+
+
+def back():
+    B_back = ms.Button(window, "back", "Back", main)
+    B_back.place(x = 1050, y = 500)
+
 def help():
-    pass
-    # Высвечиваются сведения
+    clear()
+    Lb_info = ms.LabelT(window,
+    text="\
+          The general form of heat equation \n \
+          \n \
+          u'_{t} = a**2 u''_{xx} + f(x, t), where \n \
+          \n \
+          a - diffusitivity of the rod, const \n \
+          x - point on the rod in [0, l], l - length of the rod \n \
+          t - time in [0, _T_]\n \
+          u(x, t) - temperature in rod at position x, time t \n \
+          \n \
+          Initial temperature profile \n \
+          u(x, 0) = phi(x) for x = (0, l) \n \
+          \n \
+          Initial boundary conditions: \n \
+              1. u(0, t) = T for t > 0 \n \
+              2. u'_{x}(0, t) = 0 \n \
+              3. u'_{x}(l, t) = 0 \n \
+          \n \
+          Other parameters: \n \
+              n - number of steps for x, then h = l / n \n \
+              m - number of steps for t, then tau = _T_ / m \n \
+          \n \
+              f(x, t) =  1 + cos(pi * x) \n \
+              phi(x) = 1 + cos(2*pi*x) \
+    ")
+    Lb_info.place(x = 300, y = 10)
+    back()
+    Lb_link = ms.LabelLink(window, text="download report", callback=report)
+    Lb_link.place(x = 950, y = 600)
 
 def get_data():
     global window
     global data
-    # instances = ["l", "n"]
-    # data = [1.0, 20, 1.0, 1000, 1.0] # [l, n, _T_, m, a]
     names = list(data.keys())
     for i in range(5):
         E_sample = window.nametowidget(names[i])
@@ -58,7 +93,7 @@ def show_chart(x, T_0, T_1):
     plot.set_ylabel(r"$T$")
     plot.plot(x, T_0, color = "blue") # list(map(abs, T_0))
     plot.plot(x, T_1, color="red") # list(map(abs, T_1))
-    plot.legend([r"$\phi(x)$", r"$u(x, T)$"])
+    plot.legend([r"$\varphi(x)$", r"$u(x, T)$"])
     plot.grid()
     canvas = FigureCanvasTkAgg(figure, master = window)
     canvas.draw()
@@ -66,7 +101,7 @@ def show_chart(x, T_0, T_1):
     canvas.get_tk_widget().place(x = 10, y = 10)
 
 
-def change_time(p): # p = [tau, _T_]
+def change_time(p):
     global data
     _T_, tau, time = data["_T_"], data["tau"], data["cur_t"]
 
@@ -91,12 +126,10 @@ def change_time(p): # p = [tau, _T_]
 
 
 def first_solve():
-    global data
-
     get_data()
-
     clear()
     solve()
+    back()
 
 
 def fetch_data():
@@ -111,9 +144,7 @@ def fetch_data():
     return h, tau, a, n, m, l, _T_, time
 
 
-
 def solve():
-    global data
     global T_1
 
     Lb_process = tk.Label(window, text="Numerical solvation in progress", font=ms.fontStyle())
@@ -129,11 +160,13 @@ def solve():
 
     B_next = ms.ButtonP(window, name="next", text="Next", command=change_time, p=1)
     B_next.place(x = 1050, y = 550)
+    back()
     # B_prev = ms.ButtonP(window, name="prev", text=r"Prev {$\tau$}", command=change_time, p=-1)
     # B_prev.place(x = 1000, y = 300)
 
 
 def main():
+    clear()
     global window
     ms.set_window(window, "Heat equation solver using implicit finite-difference method")
 

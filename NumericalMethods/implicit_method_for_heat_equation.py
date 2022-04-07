@@ -115,7 +115,7 @@ def test():
     x = [i*h for i in range(n)]
     t = [j*tau for j in range(m)]
 
-    T_0 = [f5(_x, 0) for _x in x]
+    T_0 = [f2(_x, 0) for _x in x]
     T_0[0] = 0
     T_0[-1] = 0
 

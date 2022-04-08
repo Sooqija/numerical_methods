@@ -16,6 +16,7 @@ matplotlib.use("TkAgg")
 window = tk.Tk()
 # {l, n, _T_, m, a, cur_t, h, tau}
 data = {"l": 1.0, "n": 6, "_T_": 1.0, "m": 40, "a": 1.0, "cur_t": 0.0, "h": None, "tau": None}
+var_def = {"длина стержня", "кол-во шагов h разбиения длины стержня", " конечное время нагрева стержня", "количество шагов промежутка времени _T_", "теплопроводность стержня"} # variables definitions
 T_1 = []
 
 
@@ -166,6 +167,7 @@ def solve():
 
 
 def main():
+# Window
     clear()
     global window
     ms.set_window(window, "Heat equation solver using implicit finite-difference method")
@@ -176,24 +178,31 @@ def main():
     # Lb_getinfo = tk.Label(window, text="Definishion parameters of the heat equation", font=ms.fontStyle())
     # Lb_getinfo.place(x = 450, y = 600)
 
+# Buttons
     B_solve = ms.Button(window, name="solve", text="Solve", command=first_solve)
     B_solve.place(x = 600, y = 550)
 
     B_help = ms.Button(window, name="help", text="Help", command=help)
     B_help.place(x = 500, y = 550)
 
-
+# Text
     names = list(data.keys())
+    defs = list(var_def)
+
     Lb_data = []
     for i in range(5):
         Lb_sample = ms.Label(window, name="__{}".format(names[i]), text="{} = ".format(names[i]))
-        Lb_sample.place(x = 50, y = (i+1) * 50)
+        Lb_sample.place(x = 50, y = (i+3) * 50)
         Lb_data.append(Lb_sample)
+
+        Lb_def_sample = ms.Label(window, name="_{}".format(names[i]), text="    —   {}".format(defs[i]))
+        Lb_def_sample.place(x = 200, y = (i+3) * 50)
+        Lb_data.append(Lb_def_sample)
 
     E_data = []
     for i in range(5):
         E_sample = tk.Entry(window, name="{}".format(names[i]), width=7, font=ms.fontStyle())
-        E_sample.place(x = 100, y = (i+1) * 50)
+        E_sample.place(x = 100, y = (i+3) * 50)
         E_data.append(E_sample)
     # E_l = tk.Entry(window, name="l", width=7, font=ms.fontStyle())
     # E_l.place(x = 150, y = 50)

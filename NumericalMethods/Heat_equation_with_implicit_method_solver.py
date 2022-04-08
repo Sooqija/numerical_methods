@@ -16,7 +16,7 @@ matplotlib.use("TkAgg")
 window = tk.Tk()
 # {l, n, _T_, m, a, cur_t, h, tau}
 data = {"l": 1.0, "n": 6, "_T_": 1.0, "m": 40, "a": 1.0, "cur_t": 0.0, "h": None, "tau": None}
-var_def = {"длина стержня", "кол-во шагов h разбиения длины стержня", " конечное время нагрева стержня", "количество шагов промежутка времени _T_", "теплопроводность стержня"} # variables definitions
+var_def = ["rod length", "number of steps h splitting the length of the rod", "terminal heating time of the rod", "number of steps of time interval _T_", "thermal conductivity of the rod"] # variables definitions
 T_1 = []
 
 

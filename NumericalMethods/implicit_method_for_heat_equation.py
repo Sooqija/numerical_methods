@@ -5,7 +5,6 @@ import numpy as np
 import math
 from math import sin, cos, pi
 
-
 '''
     ## Take a short look at the heat equation
 
@@ -48,7 +47,6 @@ def calc(data): # data = [l, n, _T_, m]
     h = data[0] / data[1]
     tau = data[2] / data[3]
     return h, tau
-
 
 def f(x, t): # now it's phi
     return 1 + cos(pi * x)
@@ -109,7 +107,7 @@ def solve(h, tau, a, n, m, l, _T_, time, T_0=[]):
     return T_0, T_1
 
 if __name__ == "__main__":
-    h, tau, a, n, m, l, _T_ = get_coef()
+    h, tau, a, n, m, l, _T_ = get_coef() # ???
 
     t = [j*tau for j in range(m)]
     x_0 = [i*h for i in range(n)]
@@ -224,8 +222,5 @@ if __name__ == "__main__":
 # ax.set_ylim(0, 5)
 # ax.set_zlabel('U')
 # ax.set_zlim(-7, 7)
-
-
-
 
 # plt.show()

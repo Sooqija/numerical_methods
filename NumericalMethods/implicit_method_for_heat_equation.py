@@ -67,43 +67,47 @@ def f4(x, t):
 def f5(x, t):
     return 4.0 * (1.0 - x) * t + x * t
 
-def tridiagonal_alg(n, A, B, C, G):
-    s = np.zeros(n + 1)
-    t = np.zeros(n + 1)
-    y = np.zeros(n + 1)
-    s[0] = C[0] / B[0]
-    t[0] = -G[0] / B[0]
-    for i in range(1, n + 1):
-        s[i] = C[i] / (B[i] - A[i] * s[i-1])
-        t[i] = (A[i] * t[i-1] - G[i]) / (B[i] - A[i]*s[i-1])
-    y[n] = t[n]
-    for i in range(n-1, -1, -1):
-        y[i] = s[i] * y[i+1] + t[i]
-    return list(y)
+
+def my_tridiagonal_alg(a, b, f):
+    n = len(a)
+    alpha = np.zeros(n)
+    beta = np.zeros(n)
+    y = np.zeros(n)
+    x = np.zeros(n)
+    if n:
+        alpha[0] = (np.sqrt(a[0]))
+        for i in range(1, n):
+            beta[i-1] = b[i-1] / alpha[i-1]
+            alpha[i] = a[i] - (beta[i-1])**2
+        beta[n-1] = b[n-1] / alpha[n-1]
+        y[0] = f[0] / alpha[0]
+        for i in range(1, n):
+            y[i] = (f[i] - beta[i-1] * y[i-1]) / (alpha[i])
+        x[n-1] = y[n-1] / alpha[n-1]
+        for i in range(n-2, -1, -1):
+            x[i] = (y[i] - beta[i] * x[i+1]) / (alpha[i])
+
+    return list(x)
+
 
 def solve(h, tau, a, n, m, l, _T_, time, T_0=[]):
     x = [i*h for i in range(n)]
+    T_const = 0
     if not (len(T_0)):
         T_0 = [f2(_x, time) for _x in x]
-        T_0[0] = 0
-        T_0[-1] = 0
-    _F_ = [f(_x, time) for _x in x]
+        T_0[0] = T_const
+        T_0[-1] = T_const
+    F = [f(_x, time) for _x in x]
 
     lam = a**2 * tau / h**2
 
-    A = [-lam for i in range(n-2)]
-    B = [1 + 2 *lam for i in range(n-2)]
-    C = [-lam for i in range(n-2)]
-    F = [T_0[i+1] + tau * _F_[i+1] for i in range(n-2)]
+    _a_ = [1 + 2 *lam for i in range(n-2)]
+    _b_ = [-lam for i in range(n-2)]
+    _F_ = [T_0[i+1] + tau * F[i+1] for i in range(n-2)]
 
-    # A = [1 for i in range(n-2)]
-    # B = [-(h**2 / (tau * a**2) + 2) for i in range(n-2)]
-    # C = [1 for i in range(n-2)]
-    # F = [(-(h**2)/(a**2)) * (_F_[i+1] + T_0[i+1]/tau) for i in range(n-2)]
-
-    T_1 = tridiagonal_alg(n-3, A, B, C, F)
-    T_1.insert(0, 0)
-    T_1.append(0)
+    T_1 = my_tridiagonal_alg(_a_, _b_, _F_)
+    T_1.insert(0, T_const)
+    T_1.append(T_const)
 
     return T_0, T_1
 
@@ -115,32 +119,23 @@ def test():
     x = [i*h for i in range(n)]
     t = [j*tau for j in range(m)]
 
+    T_const = 0
     T_0 = [f2(_x, 0) for _x in x]
-    T_0[0] = 0
-    T_0[-1] = 0
+    T_0[0] = T_const
+    T_0[-1] = T_const
 
     for j in range(m-1):
         F = [f(_x, t[j+1]) for _x in x]
 
         lam = a**2 * tau / h**2
 
-        A = [-lam for i in range(n-2)]
-        B = [1 + 2 *lam for i in range(n-2)]
-        C = [-lam for i in range(n-2)]
-        D = [T_0[i+1] + tau * F[i+1] for i in range(n-2)]
+        _a_ = [1 + 2 *lam for i in range(n-2)]
+        _b_ = [-lam for i in range(n-2)]
+        _F_ = [T_0[i+1] + tau * F[i+1] for i in range(n-2)]
 
-        # !
-        print(A)
-        print(B)
-        print(C)
-        print(D)
-
-        T_1 = tridiagonal_alg(n-3, A, B, C, D)
-        T_1.insert(0, T_0[0])
-        T_1.append(T_0[-1])
-
-        # !
-        print(T_1)
+        T_1 = my_tridiagonal_alg(_a_, _b_, _F_)
+        T_1.insert(0, T_const)
+        T_1.append(T_const)
 
         plt.plot(x, T_0, color="blue")
         plt.plot(x, T_1, color="red")

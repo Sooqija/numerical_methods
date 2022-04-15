@@ -15,7 +15,7 @@ import implicit_method_for_heat_equation as alg
 matplotlib.use("TkAgg")
 window = tk.Tk()
 # {l, n, _T_, m, a, cur_t, h, tau}
-data = {"l": 1.0, "n": 6, "_T_": 1.0, "m": 40, "a": 1.0, "cur_t": 0.0, "h": None, "tau": None}
+data = {"l": 1.0, "n": 40, "_T_": 1.0, "m": 90, "a": 1.0, "cur_t": 0.0, "h": None, "tau": None}
 var_def = ["rod length", "number of steps h splitting the length of the rod", "terminal heating time", "number of steps of time interval _T_", "thermal conductivity of the rod"] # variables definitions
 T_1 = []
 
@@ -129,7 +129,27 @@ def first_solve():
     solve()
     back()
 
+def final_solve():
+    global T_1
+    h, tau, a, n, m, l, _T_, time = fetch_data()
+    time = 0
+    T_1 = []
+    T_0_save = None
+
+    Lb_process = tk.Label(window, text="Numerical solvation in progress", font=ms.fontStyle())
+    Lb_process.place(x = 450, y = 200)
+
+    for j in range(m):
+        T_0, T_1 = alg.solve(h, tau, a, n, m, l, _T_, time, T_1)
+        if (j == 0):
+            T_0_save = T_0
+    x = [i*h for i in range(n)]
+    clear()
+    show_chart(x, T_0_save, T_1)
+    back()
+
 def fetch_data():
+    global data
     h = data["h"]
     tau = data["tau"]
     a = data["a"]
@@ -156,6 +176,8 @@ def solve():
 
     B_next = ms.ButtonP(window, name="next", text="Next", command=change_time, p=1)
     B_next.place(x = 1050, y = 550)
+    B_final = ms.Button(window, name="final", text="Final", command=final_solve)
+    B_final.place(x = 1050, y = 450)
     back()
     # B_prev = ms.ButtonP(window, name="prev", text=r"Prev {$\tau$}", command=change_time, p=-1)
     # B_prev.place(x = 1000, y = 300)

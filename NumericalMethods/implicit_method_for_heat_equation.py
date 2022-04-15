@@ -94,7 +94,7 @@ def solve(h, tau, a, n, m, l, _T_, time, T_0=[]):
         T_0 = [f2(_x, time) for _x in x]
         T_0[0] = T_const
         T_0[-1] = T_const
-    F = [f(_x, time) for _x in x]
+    F = [f4(_x, time) for _x in x]
 
     lam = a**2 * tau / h**2
 

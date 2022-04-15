@@ -44,7 +44,6 @@ def calc(data): # data = [l, n, _T_, m]
     tau = data[2] / data[3]
     return h, tau
 
-
 def f(x, t):
     return 1 + np.cos(np.pi * x)
 
@@ -58,7 +57,7 @@ def f2(x, t):
 
 
 def f3(x, t):
-    return sin(3 * pi * x / 2)
+    return np.sin(3 * np.pi * x / 2)
 
 
 def f4(x, t):
@@ -66,7 +65,6 @@ def f4(x, t):
 
 def f5(x, t):
     return 4.0 * (1.0 - x) * t + x * t
-
 
 def my_tridiagonal_alg(a, b, f):
     n = len(a)
@@ -88,7 +86,6 @@ def my_tridiagonal_alg(a, b, f):
             x[i] = (y[i] - beta[i] * x[i+1]) / (alpha[i])
 
     return list(x)
-
 
 def solve(h, tau, a, n, m, l, _T_, time, T_0=[]):
     x = [i*h for i in range(n)]

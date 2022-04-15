@@ -16,7 +16,7 @@ matplotlib.use("TkAgg")
 window = tk.Tk()
 # {l, n, _T_, m, a, cur_t, h, tau}
 data = {"l": 1.0, "n": 6, "_T_": 1.0, "m": 40, "a": 1.0, "cur_t": 0.0, "h": None, "tau": None}
-var_def = ["rod length", "number of steps h splitting the length of the rod", "terminal heating time of the rod", "number of steps of time interval _T_", "thermal conductivity of the rod"] # variables definitions
+var_def = ["rod length", "number of steps h splitting the length of the rod", "terminal heating time", "number of steps of time interval _T_", "thermal conductivity of the rod"] # variables definitions
 T_1 = []
 
 
@@ -25,10 +25,8 @@ def clear():
     for part in window.winfo_children():
         part.destroy()
 
-
 def report(event):
     webbrowser.open_new(r"https://1drv.ms/w/s!AuklzTu4sjCrgUwweyhyq7KQ635f?e=nLffVW")
-
 
 def back():
     B_back = ms.Button(window, "back", "Back", main)
@@ -84,7 +82,6 @@ def get_data():
 
     data["h"], data["tau"] = alg.calc([data["l"], data["n"], data["_T_"], data["m"]])
 
-
 def show_chart(x, T_0, T_1):
     global data
     figure = Figure(figsize = (10, 6), dpi = 100)
@@ -100,7 +97,6 @@ def show_chart(x, T_0, T_1):
     canvas.draw()
     canvas.get_tk_widget().pack()
     canvas.get_tk_widget().place(x = 10, y = 10)
-
 
 def change_time(p):
     global data
@@ -125,13 +121,13 @@ def change_time(p):
     clear()
     solve()
 
-
 def first_solve():
+    global T_1
+    T_1 = []
     get_data()
     clear()
     solve()
     back()
-
 
 def fetch_data():
     h = data["h"]
@@ -143,7 +139,6 @@ def fetch_data():
     _T_ = data["_T_"]
     time = data["cur_t"]
     return h, tau, a, n, m, l, _T_, time
-
 
 def solve():
     global T_1
@@ -165,10 +160,10 @@ def solve():
     # B_prev = ms.ButtonP(window, name="prev", text=r"Prev {$\tau$}", command=change_time, p=-1)
     # B_prev.place(x = 1000, y = 300)
 
-
 def main():
 # Window
     clear()
+    data["cur_t"] = 0
     global window
     ms.set_window(window, "Heat equation solver using implicit finite-difference method")
 

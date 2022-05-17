@@ -8,12 +8,13 @@ def fontStyle():
 
 def global_background(num):
     if num == 1:
-        return "Steelblue1"
+        return "moccasin"
+        # return "Steelblue1"
 
 # fontStyle_coordinate=tk.font.Font(family="Arial", size=12)
 
 def set_window(window : tk.Tk, text : str):
-    window.geometry('1200x650')
+    window.geometry('1920x1080')
     window.title(text)
     window.configure(background=global_background(1))
 
@@ -26,7 +27,8 @@ def Button(window, name, text, command):
                 height = 1,
                 compound = tkinter.CENTER,
                 font = fontStyle(),
-                background = "LimeGreen",
+                background = "sienna",
+                foreground="white",
                 highlightbackground = "black",
                 relief = "solid")
 

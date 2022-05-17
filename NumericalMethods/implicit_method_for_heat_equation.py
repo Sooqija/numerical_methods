@@ -1,144 +1,66 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-'''
-    ## Take a short look at the heat equation
+def InitialConditions(func_x, length):
+    return 1/np.sqrt(2 * length) + 1/np.sqrt(length) * np.cos(2 * np.pi * func_x / length)
 
-    The общий вид уравнения
+def Bfunc(func_x, length):
+    return 1/length + np.cos(np.pi * func_x / length) + np.cos(np.pi * func_x / length)
 
-    u' = a**2 u''_xx_ + f(x, t)
+def TridiagonalAlgorithm(a, b, c, d):
+    size = len(d)
+    alpha = [1] * (size - 1)
+    beta = [1] * (size - 1)
+    x = [1] * size
+    alpha[0] = -c[0] / b[0]
+    beta[0] = d[0] / b[0]
 
-    a - diffusitivity of the rod, теплопроводность стержня
+    for i in range(1, size - 1):
+        alpha[i] = -c[i] / (a[i] * alpha[i-1] + b[i])
+        beta[i] = (d[i] - a[i] * beta[i-1]) / (a[i] * alpha[i-1] + b[i])
 
-    x - coordinate on the rod
-    T - temperature of part of the rod at point x
-    t - временные отрезки, на которых изменяется температура стержня на всех его участках
+    x[size-1] = (d[size-1] - a[size-1] * beta[size-2]) / (b[size-1] + a[size-1] * alpha[size-2])
 
-    h - шаг сетки по x
-    tau - шаг сетки по t
-    l - длина стержня
-    n - кол-во шагов h, тогда логично, что l = n*h
-    _T_ - конечное время нагрева стержня
-    m - количество шагов tau, тогда логично, что _T_ = tau*m
+    for i in range(size-2, -1, -1):
+        x[i] = alpha[i] * x[i+1] + beta[i]
 
-    При этом:
-    1. x = (0, l)
-    2. tau = (0, _T_)
+    return x
 
-    сетка - это координатная плоскость, на которой по оси x откладываются собственно координаты x, а по оси y координаты времени. При этом, каждая точка соответственно владеет 3-ей координатой, которую и предстоит аппроксимировать - температурой.
+def SimpsonMethod(TotalTemp, step, xnsteps, h):
+    Temp = TotalTemp[step][0] + TotalTemp[step][xnsteps-1]
+    for j in range(1, xnsteps):
+        if (j % 2 == 1):
+            Temp = Temp + 4 * TotalTemp[step][j]
+        else:
+            Temp = Temp + 2 * TotalTemp[step][j]
 
-    Важные условия:
-    1. Концы стержня теплоизолированы, изменение их температуры равно 0, т.е.
-        u'_x_(0, t) = 0
-        u'_x_(l, t) = 0
-    2. Начальное распределение температуры по стержню определяется функцией
-        u(x, 0) = phi(x)
-
-        Функция f(x, t) выбирается в виде
-            f(x, t) = b(x) * u(x, t)
-        1/l + lambda*cos(pi * x / l)
-'''
-
-def calc(data): # data = [l, n, _T_, m]
-    h = data[0] / data[1]
-    tau = data[2] / data[3]
-    return h, tau
-
-def f(x, t):
-    return 1 + np.cos(np.pi * x)
+    Temp = Temp * h / 3
+    for i in range(xnsteps):
+        TotalTemp[step][i] = TotalTemp[step][i] / Temp
+    return TotalTemp[step]
 
 
-def f1(x, t):
-    return np.sin(x)*t + np.sin(x)
+def ImplicitMethod(step, TotalTemp, length, time_end, h, tau, a, xnsteps, tmsteps, xCoord, tCoord):
+    A = [0] * xnsteps
+    B = [0] * xnsteps
+    C = [0] * xnsteps
+    D = [0] * xnsteps
 
+    factor = a * tau / h**2
+    if step != 0:
+        for j in range(1, step + 1):
+            D = TotalTemp[j-1]
+            for i in range(xnsteps):
+                A[i] = -factor
+                B[i] = 1 + 2 * factor - tau * Bfunc(xCoord[i], length)
+                C[i] = - factor
+            A[0] = 0
+            B[0] = 1 + factor - tau * Bfunc(xCoord[0], length)
+            C[0] = -factor
+            A[xnsteps - 1] = -factor
+            B[xnsteps - 1] = 1 + factor - tau * Bfunc(xCoord[xnsteps - 1], length)
 
-def f2(x, t):
-    return 1 + np.cos(2*np.pi*x)
+            TotalTemp[j] = TridiagonalAlgorithm(A, B, C, D)
+            TotalTemp[j] = SimpsonMethod(TotalTemp, j, xnsteps, h)
 
-
-def f3(x, t):
-    return np.sin(3 * np.pi * x / 2)
-
-
-def f4(x, t):
-    return 4.0 * (1.0 - x) * x
-
-def f5(x, t):
-    return 4.0 * (1.0 - x) * t + x * t
-
-def my_tridiagonal_alg(a, b, f):
-    n = len(a)
-    alpha = np.zeros(n)
-    beta = np.zeros(n)
-    y = np.zeros(n)
-    x = np.zeros(n)
-    if n:
-        alpha[0] = (np.sqrt(a[0]))
-        for i in range(1, n):
-            beta[i-1] = b[i-1] / alpha[i-1]
-            alpha[i] = a[i] - (beta[i-1])**2
-        beta[n-1] = b[n-1] / alpha[n-1]
-        y[0] = f[0] / alpha[0]
-        for i in range(1, n):
-            y[i] = (f[i] - beta[i-1] * y[i-1]) / (alpha[i])
-        x[n-1] = y[n-1] / alpha[n-1]
-        for i in range(n-2, -1, -1):
-            x[i] = (y[i] - beta[i] * x[i+1]) / (alpha[i])
-
-    return list(x)
-
-def solve(h, tau, a, n, m, l, _T_, time, T_0=[]):
-    x = [i*h for i in range(n)]
-    T_const = 0
-    if not (len(T_0)):
-        T_0 = [f2(_x, time) for _x in x]
-        T_0[0] = T_const
-        T_0[-1] = T_const
-    F = [f4(_x, time) for _x in x]
-
-    lam = a**2 * tau / h**2
-
-    _a_ = [1 + 2 *lam for i in range(n-2)]
-    _b_ = [-lam for i in range(n-2)]
-    _F_ = [T_0[i+1] + tau * F[i+1] for i in range(n-2)]
-
-    T_1 = my_tridiagonal_alg(_a_, _b_, _F_)
-    T_1.insert(0, T_const)
-    T_1.append(T_const)
-
-    return T_0, T_1
-
-def test():
-    a, l, n, _T_, m = 1.0, 1.0, 6, 1.0, 30
-    data = [l, n, _T_, m]
-    h, tau = calc(data)
-
-    x = [i*h for i in range(n)]
-    t = [j*tau for j in range(m)]
-
-    T_const = 0
-    T_0 = [f2(_x, 0) for _x in x]
-    T_0[0] = T_const
-    T_0[-1] = T_const
-
-    for j in range(m-1):
-        F = [f(_x, t[j+1]) for _x in x]
-
-        lam = a**2 * tau / h**2
-
-        _a_ = [1 + 2 *lam for i in range(n-2)]
-        _b_ = [-lam for i in range(n-2)]
-        _F_ = [T_0[i+1] + tau * F[i+1] for i in range(n-2)]
-
-        T_1 = my_tridiagonal_alg(_a_, _b_, _F_)
-        T_1.insert(0, T_const)
-        T_1.append(T_const)
-
-        plt.plot(x, T_0, color="blue")
-        plt.plot(x, T_1, color="red")
-        plt.show()
-
-        T_0 = T_1
-
-if __name__ == "__main__":
-    test()
+    return TotalTemp

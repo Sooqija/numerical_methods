@@ -2,38 +2,51 @@
 import tkinter as tk
 import my_style as ms
 import webbrowser
-
 # Charts
 import matplotlib
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
 #Algotithms
 import implicit_method_for_heat_equation as alg
+import numpy as np
 
-#Main Settings
-matplotlib.use("TkAgg")
-window = tk.Tk()
-# {l, n, _T_, m, a, cur_t, h, tau}
-data = {"l": 1.0, "n": 40, "_T_": 1.0, "m": 90, "a": 1.0, "cur_t": 0.0, "h": None, "tau": None}
-var_def = ["rod length", "number of steps h splitting the length of the rod", "terminal heating time", "number of steps of time interval _T_", "thermal conductivity of the rod"] # variables definitions
-T_1 = []
+def increase():
+    global step
+    if step < tmsteps - 1:
+        step += 1
+    return step
 
+def last():
+    global step
+    while step < tmsteps - 1:
+        increase()
+    return step
 
-def clear():
+def initstep():
+    global step
+    step = 0
+    return step
+
+VarDef = ["rod length",
+           "size of the step for the x coordinate",
+           "terminal heating time",
+           "size of the step for time coordinate",
+           "thermal conductivity of the rod"]
+
+def ClearAll():
     global window
     for part in window.winfo_children():
         part.destroy()
 
-def report(event):
+def ThroughReport(event):
     webbrowser.open_new(r"https://1drv.ms/w/s!AuklzTu4sjCrgUwweyhyq7KQ635f?e=nLffVW")
 
-def back():
+def PlaceBackButton():
     B_back = ms.Button(window, "back", "Back", main)
     B_back.place(x = 1050, y = 500)
 
-def help():
-    clear()
+def Help():
+    ClearAll()
     Lb_info = ms.LabelT(window,
     text="\
           The general form of heat equation \n \
@@ -61,36 +74,40 @@ def help():
               phi(x) = 1 + cos(2*pi*x) \
     ")
     Lb_info.place(x = 300, y = 10)
-    back()
+    PlaceBackButton()
     Lb_link = ms.LabelLink(window, text="download report", callback=report)
     Lb_link.place(x = 950, y = 600)
 
-def get_data():
-    global window
-    global data
-    names = list(data.keys())
-    for i in range(5):
-        E_sample = window.nametowidget(names[i])
-        if len(E_sample.get()) > 0:
-            try:
-                data[names[i]] = int(E_sample.get())
-            except:
-                try:
-                    data[names[i]] = float(E_sample.get())
-                except:
-                    tk.messagebox.showinfo("Error", "Wrong format data")
+def ReadData():
+    try:
+        length = float(window.nametowidget(Names[0]).get())
+        h = float(window.nametowidget(Names[1]).get())
+        tau = float(window.nametowidget(Names[2]).get())
+        time_end = float(window.nametowidget(Names[3]).get())
+        a = float(window.nametowidget(Names[4]).get())
+    except:
+        tk.messagebox.showinfo("Error", "Wrong format of data")
 
-    data["h"], data["tau"] = alg.calc([data["l"], data["n"], data["_T_"], data["m"]])
+def Solve(_):
+    global TotalTemp
+    ReadData()
+    xnsteps = int(length / h)
+    tmsteps = int(time_end / tau)
+    xCoord = [i*h for i in range(xnsteps)]
+    tCoord = [j*tau for j in range(tmsteps)]
+    for i, x in enumerate(xCoord):
+        TotalTemp[0][i] = alg.InitialConditions(x, length)
 
-def show_chart(x, T_0, T_1):
-    global data
+    TotalTemp = alg.ImplicitMethod(step, TotalTemp, length, time_end, h, tau, a, xnsteps, tmsteps, xCoord, tCoord)
+
+    ShowChart()
+
+def ShowChart():
     figure = Figure(figsize = (10, 6), dpi = 100)
     plot = figure.add_subplot(111)
-
-    plot.set_xlabel(r"$x$")
-    plot.set_ylabel(r"$T$")
-    plot.plot(x, T_0, color = "blue") # list(map(abs, T_0))
-    plot.plot(x, T_1, color="red") # list(map(abs, T_1))
+    plot.set_xlabel(r"distance m")
+    plot.set_ylabel(r"Temperature $\degree$ C")
+    plot.plot(xCoord, TotalTemp[step], color = "blue")
     plot.legend([r"$\varphi(x)$", r"$u(x, T)$"])
     plot.grid()
     canvas = FigureCanvasTkAgg(figure, master = window)
@@ -98,137 +115,68 @@ def show_chart(x, T_0, T_1):
     canvas.get_tk_widget().pack()
     canvas.get_tk_widget().place(x = 10, y = 10)
 
-def change_time(p):
-    global data
-    _T_, tau, time = data["_T_"], data["tau"], data["cur_t"]
-
-    # !
-    print("tau = ", tau)
-    print(_T_)
-    print(time + p * tau)
-
-    if tau == _T_ or time + p * tau > _T_:
-        tk.messagebox.showinfo("Error", "Time is above the limit_1")
-    elif time + p * tau < 0:
-        tk.messagebox.showinfo("Error", "Time is above the limit_2")
-    else:
-        time += p * tau
-    data["cur_t"] = time
-
-    # !
-    print(time)
-
-    clear()
-    solve()
-
-def first_solve():
-    global T_1
-    T_1 = []
-    get_data()
-    clear()
-    solve()
-    back()
-
-def final_solve():
-    global T_1
-    h, tau, a, n, m, l, _T_, time = fetch_data()
-    time = 0
-    T_1 = []
-    T_0_save = None
-
-    Lb_process = tk.Label(window, text="Numerical solvation in progress", font=ms.fontStyle())
-    Lb_process.place(x = 450, y = 200)
-
-    for j in range(m):
-        T_0, T_1 = alg.solve(h, tau, a, n, m, l, _T_, time, T_1)
-        if (j == 0):
-            T_0_save = T_0
-    x = [i*h for i in range(n)]
-    clear()
-    show_chart(x, T_0_save, T_1)
-    back()
-
-def fetch_data():
-    global data
-    h = data["h"]
-    tau = data["tau"]
-    a = data["a"]
-    n = data["n"]
-    m = data["m"]
-    l = data["l"]
-    _T_ = data["_T_"]
-    time = data["cur_t"]
-    return h, tau, a, n, m, l, _T_, time
-
-def solve():
-    global T_1
-
-    Lb_process = tk.Label(window, text="Numerical solvation in progress", font=ms.fontStyle())
-    Lb_process.place(x = 450, y = 200)
-
-    h, tau, a, n, m, l, _T_, time = fetch_data()
-
-    T_0, T_1 = alg.solve(h, tau, a, n, m, l, _T_, time, T_1)
-    x = [i*h for i in range(n)]
-
-    clear()
-    show_chart(x, T_0, T_1)
-
-    B_next = ms.ButtonP(window, name="next", text="Next", command=change_time, p=1)
-    B_next.place(x = 1050, y = 550)
-    B_final = ms.Button(window, name="final", text="Final", command=final_solve)
-    B_final.place(x = 1050, y = 450)
-    back()
-    # B_prev = ms.ButtonP(window, name="prev", text=r"Prev {$\tau$}", command=change_time, p=-1)
-    # B_prev.place(x = 1000, y = 300)
-
 def main():
 # Window
-    clear()
-    data["cur_t"] = 0
-    global window
+    ClearAll()
     ms.set_window(window, "Heat equation solver using implicit finite-difference method")
-
     Lb_intro = ms.Label(window, name="__intro", text="Enter data of the heat equation")
     Lb_intro.place(x = 450, y = 50)
 
-    # Lb_getinfo = tk.Label(window, text="Definishion parameters of the heat equation", font=ms.fontStyle())
-    # Lb_getinfo.place(x = 450, y = 600)
-
 # Buttons
-    B_solve = ms.Button(window, name="solve", text="Solve", command=first_solve)
-    B_solve.place(x = 600, y = 550)
-
-    B_help = ms.Button(window, name="help", text="Help", command=help)
-    B_help.place(x = 500, y = 550)
+    B_help = ms.Button(window, name="help", text="Help", command=Help)
+    B_help.place(x = 500, y = 900)
+    B_solve = ms.Button(window, name="solve", text="Solve", command=lambda:Solve(initstep()))
+    B_solve.place(x = 600, y = 900)
+    B_next = ms.Button(window, name="next", text="Next", command=lambda:Solve(increase()))
+    B_next.place(x = 700, y = 900)
+    B_final = ms.Button(window, name="final", text="Final", command=lambda:Solve(last()))
+    B_final.place(x = 800, y = 900)
 
 # Text
-    names = list(data.keys())
-    defs = list(var_def)
-
     Lb_data = []
     for i in range(5):
-        Lb_sample = ms.Label(window, name="__{}".format(names[i]), text="{} = ".format(names[i]))
+        Lb_sample = ms.Label(window, name="__{}".format(Names[i]), text="{} = ".format(Names[i]))
         Lb_sample.place(x = 50, y = (i+3) * 50)
         Lb_data.append(Lb_sample)
 
-        Lb_def_sample = ms.Label(window, name="_{}".format(names[i]), text="    —   {}".format(defs[i]))
+        Lb_def_sample = ms.Label(window, name="_{}".format(Names[i]), text="    —    {}".format(VarDef[i]))
         Lb_def_sample.place(x = 200, y = (i+3) * 50)
         Lb_data.append(Lb_def_sample)
 
     E_data = []
+    Values = [1.0, 1.0, 0.01, 0.025, 1.0]
     for i in range(5):
-        E_sample = tk.Entry(window, name="{}".format(names[i]), width=7, font=ms.fontStyle())
+        E_sample = tk.Entry(window, name="{}".format(Names[i]), width=7, font=ms.fontStyle())
+        E_sample.insert(0, str(Values[i]))
         E_sample.place(x = 100, y = (i+3) * 50)
         E_data.append(E_sample)
-    # E_l = tk.Entry(window, name="l", width=7, font=ms.fontStyle())
-    # E_l.place(x = 150, y = 50)
-
-    # E_n = tk.Entry(window, name="n", width = 7, font = ms.fontStyle())
-    # E_n.place(x = 150, y = 150)
 
     window.mainloop()
 
 
-if __name__ == "__main__":
-    main()
+matplotlib.use("TkAgg")
+window = tk.Tk()
+
+length = 1.0
+time_end = 1.0
+h = 0.01
+tau = 0.025
+a = 1.0
+xnsteps = int(length / h)
+tmsteps = int(time_end / tau)
+xCoord = [i*h for i in range(xnsteps)]
+tCoord = [j*tau for j in range(tmsteps)]
+
+step = 0
+
+Names = ["length", "time_end", "h", "tau", "a", "xnsteps", "tmsteps"]
+
+TotalTemp = [0] * tmsteps
+for j in range(tmsteps):
+    TotalTemp[j] = [0] * xnsteps
+
+R = np.linspace(1, 0, tmsteps)
+B = np.linspace(0, 1, tmsteps)
+G = 0
+
+main()

@@ -14,7 +14,7 @@ def global_background(num):
 # fontStyle_coordinate=tk.font.Font(family="Arial", size=12)
 
 def set_window(window : tk.Tk, text : str):
-    window.geometry('1920x1080')
+    window.geometry('1280x720')
     window.title(text)
     window.configure(background=global_background(1))
 

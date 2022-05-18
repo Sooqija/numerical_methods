@@ -9,6 +9,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 #Algotithms
 import implicit_method_for_heat_equation as alg
 import numpy as np
+from PIL import Image, ImageTk
 
 def increase():
     global step
@@ -18,7 +19,7 @@ def increase():
 
 def last():
     global step
-    while step < tmsteps - 1:
+    while step < tmsteps - 2:
         increase()
     return step
 
@@ -27,11 +28,11 @@ def initstep():
     step = 0
     return step
 
-VarDef = ["rod length",
-           "size of the step for the x coordinate",
-           "terminal heating time",
-           "size of the step for time coordinate",
-           "thermal conductivity of the rod"]
+VarDef = ["Длинна стержня",
+          "Конечное время воздействия",
+          "Размер шага сетки по координате x",
+          "Размер шага сетки по координате t",
+          "Теплопроводность стержня"]
 
 def ClearAll():
     global window
@@ -40,10 +41,6 @@ def ClearAll():
 
 def ThroughReport(event):
     webbrowser.open_new(r"https://1drv.ms/w/s!AuklzTu4sjCrgUwweyhyq7KQ635f?e=nLffVW")
-
-def PlaceBackButton():
-    B_back = ms.Button(window, "back", "Back", main)
-    B_back.place(x = 1050, y = 500)
 
 def Help():
     ClearAll()
@@ -74,27 +71,32 @@ def Help():
               phi(x) = 1 + cos(2*pi*x) \
     ")
     Lb_info.place(x = 300, y = 10)
-    PlaceBackButton()
+    B_back = ms.Button(window, "back", "Back", main)
+    B_back.place(x = 1050, y = 500)
     Lb_link = ms.LabelLink(window, text="download report", callback=report)
     Lb_link.place(x = 950, y = 600)
 
 def ReadData():
+    global length, time_end, h, tau, a
     try:
         length = float(window.nametowidget(Names[0]).get())
-        h = float(window.nametowidget(Names[1]).get())
-        tau = float(window.nametowidget(Names[2]).get())
-        time_end = float(window.nametowidget(Names[3]).get())
+        time_end = float(window.nametowidget(Names[1]).get())
+        h = float(window.nametowidget(Names[2]).get())
+        tau = float(window.nametowidget(Names[3]).get())
         a = float(window.nametowidget(Names[4]).get())
     except:
         tk.messagebox.showinfo("Error", "Wrong format of data")
 
 def Solve(_):
-    global TotalTemp
+    global TotalTemp, length, h, time_end, tau, xnsteps, tmsteps, xCoord, tCoord, step, a
     ReadData()
     xnsteps = int(length / h)
     tmsteps = int(time_end / tau)
     xCoord = [i*h for i in range(xnsteps)]
     tCoord = [j*tau for j in range(tmsteps)]
+    TotalTemp = [0] * tmsteps
+    for j in range(tmsteps):
+        TotalTemp[j] = [0] * xnsteps
     for i, x in enumerate(xCoord):
         TotalTemp[0][i] = alg.InitialConditions(x, length)
 
@@ -103,44 +105,45 @@ def Solve(_):
     ShowChart()
 
 def ShowChart():
-    figure = Figure(figsize = (10, 6), dpi = 100)
+    figure = Figure(figsize = (9, 5), dpi = 100)
     plot = figure.add_subplot(111)
     plot.set_xlabel(r"distance m")
     plot.set_ylabel(r"Temperature $\degree$ C")
     plot.plot(xCoord, TotalTemp[step], color = "blue")
+    plot.plot(xCoord, TotalTemp[step+1], color = "green")
     plot.legend([r"$\varphi(x)$", r"$u(x, T)$"])
     plot.grid()
     canvas = FigureCanvasTkAgg(figure, master = window)
     canvas.draw()
     canvas.get_tk_widget().pack()
-    canvas.get_tk_widget().place(x = 10, y = 10)
+    canvas.get_tk_widget().place(x = 25, y = 200)
 
 def main():
-# Window
+    # Window
     ClearAll()
     ms.set_window(window, "Heat equation solver using implicit finite-difference method")
-    Lb_intro = ms.Label(window, name="__intro", text="Enter data of the heat equation")
-    Lb_intro.place(x = 450, y = 50)
+    Lb_intro = ms.Label(window, name="__intro", text="Введите значения параметров уравнения теплопроводности")
+    Lb_intro.place(x = 50, y = 0)
 
-# Buttons
+    # Buttons
     B_help = ms.Button(window, name="help", text="Help", command=Help)
-    B_help.place(x = 500, y = 900)
+    B_help.place(x = 960, y = 260)
     B_solve = ms.Button(window, name="solve", text="Solve", command=lambda:Solve(initstep()))
-    B_solve.place(x = 600, y = 900)
+    B_solve.place(x = 960, y = 370)
     B_next = ms.Button(window, name="next", text="Next", command=lambda:Solve(increase()))
-    B_next.place(x = 700, y = 900)
+    B_next.place(x = 960, y = 480)
     B_final = ms.Button(window, name="final", text="Final", command=lambda:Solve(last()))
-    B_final.place(x = 800, y = 900)
+    B_final.place(x = 960, y = 590)
 
-# Text
+    # Text
     Lb_data = []
     for i in range(5):
-        Lb_sample = ms.Label(window, name="__{}".format(Names[i]), text="{} = ".format(Names[i]))
-        Lb_sample.place(x = 50, y = (i+3) * 50)
+        Lb_sample = ms.Label(window, name="__{}".format(Names[i]), text="{}    =    ".format(Names[i]))
+        Lb_sample.place(x = 50, y = (i+1) * 40)
         Lb_data.append(Lb_sample)
 
-        Lb_def_sample = ms.Label(window, name="_{}".format(Names[i]), text="    —    {}".format(VarDef[i]))
-        Lb_def_sample.place(x = 200, y = (i+3) * 50)
+        Lb_def_sample = ms.Label(window, name="_{}".format(Names[i]), text="   -   {}".format(VarDef[i]))
+        Lb_def_sample.place(x = 300, y = (i+1) * 40)
         Lb_data.append(Lb_def_sample)
 
     E_data = []
@@ -148,8 +151,14 @@ def main():
     for i in range(5):
         E_sample = tk.Entry(window, name="{}".format(Names[i]), width=7, font=ms.fontStyle())
         E_sample.insert(0, str(Values[i]))
-        E_sample.place(x = 100, y = (i+3) * 50)
+        E_sample.place(x = 200, y = (i+1) * 40)
         E_data.append(E_sample)
+
+    canvas = tk.Canvas(window, width=400, height=110)
+    image = Image.open("e:/Python_Programs/NumericalMethods/phi.png")
+    photo = ImageTk.PhotoImage(image)
+    image = canvas.create_image(0, 0, anchor='nw', image=photo)
+    canvas.place(x = 800, y = 80)
 
     window.mainloop()
 
@@ -174,9 +183,5 @@ Names = ["length", "time_end", "h", "tau", "a", "xnsteps", "tmsteps"]
 TotalTemp = [0] * tmsteps
 for j in range(tmsteps):
     TotalTemp[j] = [0] * xnsteps
-
-R = np.linspace(1, 0, tmsteps)
-B = np.linspace(0, 1, tmsteps)
-G = 0
 
 main()

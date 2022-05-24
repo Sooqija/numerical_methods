@@ -105,18 +105,28 @@ def Solve(_):
     ShowChart()
 
 def ShowChart():
+    global canvas, plot, figure, id
     figure = Figure(figsize = (9, 5), dpi = 100)
     plot = figure.add_subplot(111)
     plot.set_xlabel(r"distance m")
     plot.set_ylabel(r"Temperature $\degree$ C")
-    plot.plot(xCoord, TotalTemp[step], color = "blue")
-    plot.plot(xCoord, TotalTemp[step+1], color = "green")
+    plot.plot(xCoord, TotalTemp[0], color = "blue")
+    plot.plot(xCoord, alg.Normalize(TotalTemp[step+1]), color = "red")
     plot.legend([r"$\varphi(x)$", r"$u(x, T)$"])
     plot.grid()
     canvas = FigureCanvasTkAgg(figure, master = window)
     canvas.draw()
     canvas.get_tk_widget().pack()
     canvas.get_tk_widget().place(x = 25, y = 200)
+    id = figure.canvas.mpl_connect('key_press_event', quadro)
+
+
+def quadro(event):
+    global canvas, plot, figure, id, step, TotalTemp
+    plot.plot(xCoord, [temp**2 for temp in TotalTemp[0]], color='blue', linestyle="--")
+    plot.plot(xCoord, [abs(temp) for temp in TotalTemp[step+1]], color='red', linestyle="--")
+    plot.legend([r"$\varphi(x)$", r"$u(x, T)$", r"$\varphi^2(x)$", r"$u^2(x, T)$"])
+    canvas.draw()
 
 def main():
     # Window

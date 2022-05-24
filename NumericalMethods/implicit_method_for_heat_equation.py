@@ -4,8 +4,11 @@ import matplotlib.pyplot as plt
 def InitialConditions(func_x, length):
     return 1/np.sqrt(2 * length) + 1/np.sqrt(length) * np.cos(2 * np.pi * func_x / length)
 
+# def InitialConditions(func_x, length):
+#     return 1/np.sqrt(length)
+
 def Bfunc(func_x, length):
-    return 1/np.sqrt(2 * length) + 1/np.sqrt(length) * np.cos(2 * np.pi * func_x / length)
+    return 1/np.sqrt(length) + 1/np.sqrt(length) * np.cos(np.pi * func_x / length)
 
 def TridiagonalAlgorithm(a, b, c, d):
     size = len(d)
@@ -27,16 +30,23 @@ def TridiagonalAlgorithm(a, b, c, d):
     return x
 
 def SimpsonMethod(TotalTemp, step, length, xnsteps, h, xCoord):
-    Sum = TotalTemp[step][0] * Bfunc(xCoord[0], length) + TotalTemp[step][xnsteps-1] * Bfunc(xCoord[xnsteps-1], length)
+    Sum = TotalTemp[step][0] + TotalTemp[step][xnsteps-1]  # * Bfunc(xCoord[0], length)* Bfunc(xCoord[xnsteps-1], length)
     for j in range(1, xnsteps):
         if (j % 2 == 1):
-            Sum += 4 * TotalTemp[step][j] * Bfunc(xCoord[j], length)
+            Sum += 4 * TotalTemp[step][j] # * Bfunc(xCoord[j], length)
         else:
-            Sum += 2 * TotalTemp[step][j] * Bfunc(xCoord[j], length)
+            Sum += 2 * TotalTemp[step][j]  # * Bfunc(xCoord[j], length)
     Sum *= h / 3
     return Sum
 
-
+def Normalize(Temp):
+    Res = Temp.copy()
+    for i in range(len(Temp)):
+        if Res[i] > 0:
+            Res[i] = np.sqrt(Res[i])
+        else:
+            Res[i] = -np.sqrt(abs(Res[i]))
+    return Res
 
 def ImplicitMethod(step, TotalTemp, length, time_end, h, tau, a, xnsteps, tmsteps, xCoord, tCoord):
     A = [0] * xnsteps
@@ -50,13 +60,13 @@ def ImplicitMethod(step, TotalTemp, length, time_end, h, tau, a, xnsteps, tmstep
         Sum = SimpsonMethod(TotalTemp, j-1, length, xnsteps, h, xCoord)
         for i in range(xnsteps):
             A[i] = - factor
-            B[i] = 1 + 2 * factor - tau * Bfunc(xCoord[i], length) * TotalTemp[j-1][i] + TotalTemp[j-1][i] * Sum
+            B[i] = 1 + 2 * factor - tau * Bfunc(xCoord[i], length) # * TotalTemp[j-1][i] + TotalTemp[j-1][i] * Sum
             C[i] = - factor
         A[0] = 0
-        B[0] = 1 + factor - tau * Bfunc(xCoord[0], length) * TotalTemp[j-1][0] + TotalTemp[j-1][0] * Sum
+        B[0] = 1 + factor - tau * Bfunc(xCoord[0], length) # * TotalTemp[j-1][0] + TotalTemp[j-1][0] * Sum
         C[0] = -factor
         A[xnsteps - 1] = -factor
-        B[xnsteps - 1] = 1 + factor - tau * Bfunc(xCoord[xnsteps - 1], length) * TotalTemp[j-1][xnsteps-1] + TotalTemp[j-1][xnsteps-1] * Sum
+        B[xnsteps - 1] = 1 + factor - tau * Bfunc(xCoord[xnsteps - 1], length) # * TotalTemp[j-1][xnsteps-1] + TotalTemp[j-1][xnsteps-1] * Sum
         C[xnsteps - 1] = 0
 
         TotalTemp[j] = TridiagonalAlgorithm(A, B, C, D)
